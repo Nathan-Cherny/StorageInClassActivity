@@ -2,6 +2,7 @@ package com.example.networkapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -14,6 +15,11 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.squareup.picasso.Picasso
 import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileReader
+import java.io.IOException
 
 // TODO (1: Fix any bugs)
 // TODO (2: Add function saveComic(...) to save comic info when downloaded
@@ -27,12 +33,15 @@ class MainActivity : AppCompatActivity() {
     lateinit var numberEditText: EditText
     lateinit var showButton: Button
     lateinit var comicImageView: ImageView
+    private val internalFilename = "cached_comic"
+    private lateinit var file: File
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         requestQueue = Volley.newRequestQueue(this)
+        file = File(filesDir, internalFilename)
 
         titleTextView = findViewById<TextView>(R.id.comicTitleTextView)
         descriptionTextView = findViewById<TextView>(R.id.comicDescriptionTextView)
@@ -44,6 +53,26 @@ class MainActivity : AppCompatActivity() {
             downloadComic(numberEditText.text.toString())
         }
 
+        // Log.d("filesDir", filesDir.toString())
+
+        // load da file
+        try {
+            val br = BufferedReader(FileReader(file))
+            val text = StringBuilder()
+            var line: String?
+            while (br.readLine().also { line = it } != null) {
+                text.append(line)
+                text.append('\n')
+            }
+            br.close()
+            if(text.toString() != ""){
+                var JSONFileCached = JSONObject(text.toString())
+                showComic(JSONFileCached)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
     }
 
     // Fetches comic from web as JSONObject
@@ -51,23 +80,34 @@ class MainActivity : AppCompatActivity() {
         val url = "https://xkcd.com/$comicId/info.0.json"
         requestQueue.add (
             JsonObjectRequest(url
-                , {showComic(it)}
+                , {showComic(saveComic(it))}
                 , {}
             )
         )
     }
 
     // Display a comic for a given comic JSON object
-    private fun showComic (comicObject: JSONObject) {
+    private fun showComic (comicObject: JSONObject?) {
+        if(comicObject == null) return
         titleTextView.text = comicObject.getString("title")
         descriptionTextView.text = comicObject.getString("alt")
         Picasso.get().load(comicObject.getString("img")).into(comicImageView)
     }
 
     // Implement this function
-    private fun saveComic(comicObject: JSONObject) {
+    private fun saveComic(comicObject: JSONObject) : JSONObject? {
+        try {
+                val outputStream = FileOutputStream(file)
+                outputStream.write(comicObject.toString().toByteArray())
+                outputStream.close()
+            return comicObject
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        return null
+        }
 
-    }
+
 
 
 }

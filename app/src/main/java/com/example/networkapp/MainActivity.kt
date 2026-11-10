@@ -56,22 +56,7 @@ class MainActivity : AppCompatActivity() {
         // Log.d("filesDir", filesDir.toString())
 
         // load da file
-        try {
-            val br = BufferedReader(FileReader(file))
-            val text = StringBuilder()
-            var line: String?
-            while (br.readLine().also { line = it } != null) {
-                text.append(line)
-                text.append('\n')
-            }
-            br.close()
-            if(text.toString() != ""){
-                var JSONFileCached = JSONObject(text.toString())
-                showComic(JSONFileCached)
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
+        loadComic()
 
     }
 
@@ -107,7 +92,24 @@ class MainActivity : AppCompatActivity() {
         return null
         }
 
-
+    private fun loadComic(){
+        try {
+            val br = BufferedReader(FileReader(file))
+            val text = StringBuilder()
+            var line: String?
+            while (br.readLine().also { line = it } != null) {
+                text.append(line)
+                text.append('\n')
+            }
+            br.close()
+            if(text.toString() != ""){
+                var JSONFileCached = JSONObject(text.toString())
+                showComic(JSONFileCached)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
 
 
 }
